@@ -24,7 +24,7 @@ import type { ParseOptions } from '@std/cli';
  * const arg: Argument = {
  *   name: "environment",
  *   description: "the environment this script is targeting. Valid values are `dev` and `prod`",
- *   validationFunction: value => ['dev', 'prod'].includes(value?.toLowerCase()),
+ *   validationFunction: value => ['dev', 'prod'].includes(String(value).toLowerCase()),
  *   validationFailedMessage: value => `${value} is not a valid value for environment. Valid values are \`dev\` and \`prod\``
  * }
  * ```

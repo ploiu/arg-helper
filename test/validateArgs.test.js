@@ -1,9 +1,4 @@
-import {
-  assert,
-  assertEquals,
-  assertFalse,
-  assertObjectMatch,
-} from '@std/assert';
+import { assert, assertEquals, assertFalse, assertObjectMatch } from '@std/assert';
 import { stripAnsiCode } from '@std/fmt/colors';
 import { validateArgs } from '../argHelperFunctions.ts';
 // a separate test file for this function because we have to overwrite more
@@ -28,11 +23,35 @@ Deno.test('Test that validateArgs shows help text if no help flag is defined and
   });
 
   const args = ['--help', '--whatever', 'whateverValue'];
+  Deno.exit = () => {};
   validateArgs({ args, definition });
   assertEquals(
     stripAnsiCode(loggedText),
     '\nArguments:\n\n  --help, -h    - show this help text',
   );
+});
+
+Deno.test('Test that validateArgs exits after displaying help text', () => {
+  const definition = {
+    arguments: [],
+  };
+  let exited = false;
+  Deno.exit = () => exited = true;
+  const args = ['--help'];
+  validateArgs({ args, definition });
+  assert(exited);
+});
+
+Deno.test('Test that validateArgs calls the cleanupFunction before exiting if help flag is passed', () => {
+  let cleanupCalled = false;
+  const definition = {
+    arguments: [],
+  };
+  const args = ['--help'];
+  Deno.exit = () => {};
+  const cleanupFunction = () => cleanupCalled = true;
+  validateArgs({ args, definition, cleanupFunction });
+  assert(cleanupCalled);
 });
 
 Deno.test('Test that validateArgs shows help text if no help flag is defined and -h is passed', () => {
@@ -47,6 +66,7 @@ Deno.test('Test that validateArgs shows help text if no help flag is defined and
   });
 
   const args = ['-h', '--whatever', 'whateverValue'];
+  Deno.exit = () => {};
   validateArgs({ args, definition });
   assertEquals(
     stripAnsiCode(loggedText),

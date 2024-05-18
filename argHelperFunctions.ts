@@ -1,29 +1,75 @@
-import type {
-  Argument,
-  ScriptDefinition,
-  ValidateArgsParams,
-} from './models.ts';
+import type { Argument, ScriptDefinition, ValidateArgsParams } from './models.ts';
 import { type Args, parseArgs } from '@std/cli';
 import { cyan, magenta, red, yellow } from '@std/fmt/colors';
 
 /**
- * Parses the passed `args` with `@std/cli#parseArgs`, and validates them against the passed definition.
+ * Parses arguments and validates them against a schema you define, and returns the parsed arguments on success.
  *
- * If the arguments do not pass the definition, help text is displayed and the program will exit using `Deno.exit`.
- * This should be called before you invoke anything else, but just in case that's unnatainable you can pass a callback function that can be used to cleanup anything you've set up, before the program exits
+ * # Description
+ * Arguments should be parseable by `parseArgs` from {@link https://jsr.io/@std/cli|@std/cli}.
  *
- * If all the arguments validate successfully, they are returned back to the caller.
- * @param args the arguments as a string Array. `Deno.args` can return this, or you can pass your own argument array.
- * @param definition the Argument definitions for validation and help text building
- * @param parseOptions options to parse your parameters.
- * @param cleanupFunction a function that can be called in case argument validation fails, called before calling `Deno.exit`.
+ * If any of the help flags are passed (default `--help` or `-h`), then generated help text is displayed with {@linkcode buildHelpText}; the `cleanupFunction` is called (if specified); and the script is exited with `Deno.exit(0)`.
+ *
+ * Arguments are by default validated to make sure they exist if marked `required`. If a `validationFunction` is specified for the argument, that function is used instead.
+ * If an argument fails validation, then an error message is displayed; generated help text will print below; the `cleanupFunction` is called (if specified); and the script is exited with `Deno.exit(1)`. This ensures that your users know how to use your script while preventing the script from acting upon invalid arguments.
+ *
+ * For ease of use, parsed arguments are renamed to their full name when returned. This allows the script writer to only have to search for 1 key in the return value.
+ *
+ * ## Examples
+ * @example Basic Usage
+ * ```ts
+ * import { validateArgs, type ScriptDefinition } from '@ploiu/arg-helper';
+ * const args = Deno.args;
+ * const definition: ScriptDefinition = {
+ *   arguments: [
+ *     {
+ *       name: 'firstArg',
+ *       description: 'first argument'
+ *     },
+ *     {
+ *         name: 'env',
+ *         shortName: 'e',
+ *         description: 'The environment to do the thing for. Must be either `dev` or `prod`',
+ *         validationFunction: value => ['dev', 'prod'].includes(String(value).toLowerCase()),
+ *         validationFailedMessage: value => `${value} is not either \`dev\` or \`prod\``
+ *     }
+ *   ],
+ *   scriptDescription: 'This script does the thing'
+ * }
+ * 
+ * const validatedArgs = validateArgs({ args, definition })
+ * ```
+ *
+ * @example renamed args
+ * ```ts
+ * import { validateArgs, type ScriptDefinition } from '@ploiu/arg-helper'
+ * const args = ['-f', 'firstArgValue'];
+ * const definition: ScriptDefinition = {
+ *   arguments: [
+ *     {
+ *       name: 'firstArg',
+ *       shortName: 'f',
+ *       description: 'first argument'
+ *     }
+ *   ],
+ *   scriptDescription: 'This script does the thing'
+ * }
+ * 
+ * const validatedArgs = validateArgs({ args, definition })
+ * // {firstArg: 'firstArgValue', _: []}
+ * ```
+ *
+ * @see {@link https://jsr.io/@std/cli/doc/~/ParseOptions}
  */
 export function validateArgs(params: ValidateArgsParams): Args {
   const { args, definition, parseOptions, cleanupFunction } = params;
   const parsedArgs = parseArgs(args, parseOptions);
   const helpFlags = definition.helpFlags ?? ['help', 'h'];
+  const helpText = buildHelpText(definition);
   if (helpFlags[0] in parsedArgs || helpFlags[1] as string in parsedArgs) {
-    console.log(buildHelpText(definition));
+    console.log(helpText);
+    cleanupFunction?.();
+    Deno.exit(0);
   }
   for (const arg of definition.arguments) {
     if (validateArgument(parsedArgs, arg)) {
@@ -33,6 +79,7 @@ export function validateArgs(params: ValidateArgsParams): Args {
       delete parsedArgs[arg.shortName ?? ''];
       parsedArgs[arg.name] = value;
     } else {
+      console.log(helpText);
       cleanupFunction?.();
       Deno.exit(1);
     }
@@ -43,8 +90,7 @@ export function validateArgs(params: ValidateArgsParams): Args {
 
 export function validateArgument(parsedArgs: Args, arg: Argument): boolean {
   // deno-lint-ignore no-explicit-any
-  const defaultValidationFunction = (value: any) =>
-    !!value || arg.required === false;
+  const defaultValidationFunction = (value: any) => !!value || arg.required === false;
   const defaultErrorMessage = arg.validationFailedMessage ??
     // this gets paired with us logging the argument name at the end
     (() => `is a required argument`);
@@ -68,7 +114,7 @@ export function validateArgument(parsedArgs: Args, arg: Argument): boolean {
  * creates formatted help text for the passed {@linkcode ScriptDefinition}
  *
  * This function generates help text based on the overall script description, arguments, and argument descriptions.
- * Optional arguments are marked, required are unmarked
+ * Arguments are listed as required or optional based on what is set for that argument's `required` field. `required` is assumed `true` by default if unspecified
  *
  * @example HelpText Input And Associated Output
  * ```ts

@@ -1,10 +1,6 @@
 import { assert, assertEquals, assertFalse } from '@std/assert';
 import { stripAnsiCode } from '@std/fmt/colors';
-import {
-  buildArgLine,
-  buildHelpText,
-  validateArgument,
-} from '../argHelperFunctions.ts';
+import { buildArgLine, buildHelpText, validateArgument } from '../argHelperFunctions.ts';
 
 // allows us to verify that we use error messages properly
 function replaceConsoleMethod(fn) {

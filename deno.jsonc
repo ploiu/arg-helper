@@ -9,19 +9,18 @@
     "exclude": ["Deno.d.ts"]
   },
   "fmt": {
-    "exclude": ["Deno.d.ts"],
+    "exclude": ["Deno.d.ts", ".vscode/**/*.json"],
     "singleQuote": true,
     "semiColons": true,
     "useTabs": false,
     "indentWidth": 2,
-    "proseWrap": "preserve"
+    "proseWrap": "preserve",
+    "lineWidth": 100
   },
   "tasks": {
     "types": "deno types > Deno.d.ts",
     "check": "deno fmt; deno lint",
-    "test": "deno task check; deno test",
-    "run": "deno run ./main.ts",
-    "debug": "deno run --inspect-wait ./main.ts"
+    "test": "deno task check; deno test --coverage"
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@^0.225.1",
