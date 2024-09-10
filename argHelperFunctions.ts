@@ -15,6 +15,8 @@ import { cyan, magenta, red, yellow } from '@std/fmt/colors';
  *
  * For ease of use, parsed arguments are renamed to their full name when returned. This allows the script writer to only have to search for 1 key in the return value.
  *
+ * If no arguments are passed and all arguments are optional, this function will not show the help text unless {@linkcode ScriptDefinition}'s `anyArgRequired` field is set to `true`
+ *
  * ## Examples
  * @example Basic Usage
  * ```ts
@@ -36,7 +38,7 @@ import { cyan, magenta, red, yellow } from '@std/fmt/colors';
  *   ],
  *   scriptDescription: 'This script does the thing'
  * }
- * 
+ *
  * const validatedArgs = validateArgs({ args, definition })
  * ```
  *
@@ -54,7 +56,7 @@ import { cyan, magenta, red, yellow } from '@std/fmt/colors';
  *   ],
  *   scriptDescription: 'This script does the thing'
  * }
- * 
+ *
  * const validatedArgs = validateArgs({ args, definition })
  * // {firstArg: 'firstArgValue', _: []}
  * ```
@@ -66,7 +68,10 @@ export function validateArgs(params: ValidateArgsParams): Args {
   const parsedArgs = parseArgs(args, parseOptions);
   const helpFlags = definition.helpFlags ?? ['help', 'h'];
   const helpText = buildHelpText(definition);
-  if (helpFlags[0] in parsedArgs || helpFlags[1] as string in parsedArgs) {
+  if (
+    (args.length === 0 && definition.anyArgRequired) || helpFlags[0] in parsedArgs ||
+    helpFlags[1] as string in parsedArgs
+  ) {
     console.log(helpText);
     cleanupFunction?.();
     Deno.exit(0);

@@ -206,3 +206,58 @@ Deno.test('Test that validateArgs shows the argument help text if it fails valid
   validateArgs({ args, definition });
   assert(failedMessageCreated);
 });
+
+Deno.test('Test that validateArgs shows the help text if no arguments are passed and anyArgRequired is true', () => {
+  let helpTextRan = false;
+  let exited = false;
+  replaceConsoleMethod(function log() {
+    helpTextRan = true;
+  });
+  Deno.exit = () => exited = true;
+
+  const definition = {
+    anyArgRequired: true,
+    arguments: [
+      {
+        name: 'test',
+        required: false,
+        description: '',
+      },
+      {
+        name: 'test2',
+        required: false,
+        description: '',
+      },
+    ],
+  };
+  validateArgs({ args: [], definition });
+  assert(helpTextRan);
+  assert(exited);
+});
+
+Deno.test('Test that validateArgs does not show the help text if no arguments are passed and anyArgRequired is false', () => {
+  let helpTextRan = false;
+  let exited = false;
+  replaceConsoleMethod(function log() {
+    helpTextRan = true;
+  });
+  Deno.exit = () => exited = true;
+
+  const definition = {
+    arguments: [
+      {
+        name: 'test',
+        required: false,
+        description: '',
+      },
+      {
+        name: 'test2',
+        required: false,
+        description: '',
+      },
+    ],
+  };
+  validateArgs({ args: [], definition });
+  assertFalse(helpTextRan);
+  assertFalse(exited);
+});

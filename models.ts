@@ -58,6 +58,8 @@ export interface ScriptDefinition {
   scriptDescription: string;
   /** flags the user can pass to explicitly show the help message for your script. Defaults to `--help` and `-h` */
   helpFlags?: [string, string?];
+  /** controls if any argument is required to be passed. Should be used if all arguments are optional. Defaults to `false` */
+  anyArgRequired?: boolean;
 }
 
 /**
