@@ -261,3 +261,32 @@ Deno.test('Test that validateArgs does not show the help text if no arguments ar
   assertFalse(helpTextRan);
   assertFalse(exited);
 });
+
+Deno.test('Test that validateArgs uses the default value for an argument', () => {
+  const definition = {
+    arguments: [
+      {
+        name: 'test',
+        description: '',
+        defaultValue: 'whatever',
+      },
+    ],
+  };
+  const { test } = validateArgs({ definition, args: [] });
+  assertEquals(test, 'whatever');
+});
+
+Deno.test('Test that validateArgs ignores `required`s value if a default value is passed', () => {
+  const definition = {
+    arguments: [
+      {
+        name: 'test',
+        description: '',
+        defaultValue: 'whatever',
+        required: true,
+      },
+    ],
+  };
+  const { test } = validateArgs({ definition, args: [] });
+  assertEquals(test, 'whatever');
+});

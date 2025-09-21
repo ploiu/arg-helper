@@ -80,7 +80,7 @@ export function validateArgs(params: ValidateArgsParams): Args {
     if (validateArgument(parsedArgs, arg)) {
       // deleting short name and setting long name makes it easier for script writer.
       // shortName will always be not null here if there is no value for long name
-      const value = parsedArgs[arg.name] ?? parsedArgs[arg.shortName!];
+      const value = parsedArgs[arg.name] ?? parsedArgs[arg.shortName!] ?? arg.defaultValue;
       delete parsedArgs[arg.shortName ?? ''];
       parsedArgs[arg.name] = value;
     } else {
@@ -95,7 +95,8 @@ export function validateArgs(params: ValidateArgsParams): Args {
 
 export function validateArgument(parsedArgs: Args, arg: Argument): boolean {
   // deno-lint-ignore no-explicit-any
-  const defaultValidationFunction = (value: any) => !!value || arg.required === false;
+  const defaultValidationFunction = (value: any) =>
+    !!value || arg.required === false || arg.defaultValue !== undefined;
   const defaultErrorMessage = arg.validationFailedMessage ??
     // this gets paired with us logging the argument name at the end
     (() => `is a required argument`);
@@ -107,7 +108,8 @@ export function validateArgument(parsedArgs: Args, arg: Argument): boolean {
   // deno-lint-ignore no-explicit-any
   const argValue: any = arg.name in parsedArgs
     ? parsedArgs[arg.name]
-    : parsedArgs[arg.shortName ?? ''];
+    : parsedArgs[arg.shortName ?? ''] ??
+      arg.defaultValue;
   if (!validationFunction(argValue)) {
     console.error(red(arg.name + ': ' + errorMessage(argValue)));
     return false;

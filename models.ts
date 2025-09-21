@@ -28,6 +28,16 @@ import type { ParseOptions } from '@std/cli';
  *   validationFailedMessage: value => `${value} is not a valid value for environment. Valid values are \`dev\` and \`prod\``
  * }
  * ```
+ *
+ * @example Optional Argument With A Default Value
+ * ```ts
+ * import type {Argument} from '@ploiu/arg-helper'
+ * const arg: Argument = {
+ *   name: "timeout",
+ *   description: "the timeout value to use, in seconds. Defaults to 5",
+ *   defaultValue: 5
+ * }
+ * ```
  */
 export type Argument = {
   /** The long name of the argument. E.g. "test" would be parsed from `--test` */
@@ -44,6 +54,8 @@ export type Argument = {
   /** The message to display before exiting if the {@linkcode Argument.validationFunction} returns false. Defaults to "The value passed for <name> is invalid." This value only needs to be populated if you supplied a `validationFunction` */
   // deno-lint-ignore no-explicit-any
   validationFailedMessage?: (incorrectValue?: any) => string;
+  /** The default value to use if the argument is not passed. If this is set, `required` is ignored and the argument is treated as optional */
+  defaultValue?: string | number | boolean;
 };
 
 /**
